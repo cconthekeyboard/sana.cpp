@@ -3,10 +3,17 @@
 #include "llama.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <stdexcept>
 #include <vector>
 
 namespace {
+
+void suppress_llama_info_logging(ggml_log_level level, const char * text, void * /*user_data*/) {
+    if (level >= GGML_LOG_LEVEL_WARN) {
+        std::fputs(text, stderr);
+    }
+}
 
 const std::string kComplexHumanInstruction =
     "Given a user prompt, generate an 'Enhanced prompt' that provides detailed visual descriptions suitable for image generation. Evaluate the level of detail in the user prompt:\n"
@@ -76,6 +83,7 @@ struct GemmaEncoder::Impl {
     int32_t n_threads = 4;
 
     explicit Impl(const GemmaEncoderConfig & config) {
+        llama_log_set(suppress_llama_info_logging, nullptr);
         llama_backend_init();
 
         llama_model_params model_params = llama_model_default_params();
